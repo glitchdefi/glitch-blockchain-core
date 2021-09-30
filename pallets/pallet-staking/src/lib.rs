@@ -2264,7 +2264,6 @@ decl_module! {
 		#[weight = 0]
 		pub fn reward_validator(origin) -> DispatchResult {
 			let pot_value = <pallet_fund::Module<T> as Pot>::pot_value();
-
 			Ok(())
 		}
 	}

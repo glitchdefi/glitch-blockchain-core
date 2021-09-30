@@ -18,7 +18,7 @@ pub type BalanceOf<T> =
 pub type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<
 	<T as frame_system::Config>::AccountId,
 >>::NegativeImbalance;
-pub type Balance = u64;
+pub type Balance = u128;
 
 /// Hardcoded pallet ID; used to create the special Pot Account
 /// Must be exactly 8 characters long
@@ -122,6 +122,10 @@ pub trait Pot {
 
 impl<T: Config> Pot for Module<T> {
 	fn pot_value() -> Option<Balance> {
-		sp_std::convert::TryInto::<u64>::try_into(Module::<T>::pot()).ok()
+		let balance: BalanceOf<T> = Module::<T>::pot();
+
+		let res = sp_std::convert::TryInto::<Balance>::try_into(balance).ok();
+
+		res
 	}
 }
