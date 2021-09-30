@@ -304,6 +304,7 @@ use frame_support::{
 	}
 };
 use pallet_session::historical;
+use pallet_fund::Pot;
 use sp_runtime::{
 	Percent, Perbill, PerU16, RuntimeDebug, DispatchError,
 	curve::PiecewiseLinear,
@@ -776,7 +777,7 @@ impl<T: Config> SessionInterface<<T as frame_system::Config>::AccountId> for T w
 	}
 }
 
-pub trait Config: frame_system::Config + SendTransactionTypes<Call<Self>> {
+pub trait Config: frame_system::Config + SendTransactionTypes<Call<Self>> + pallet_fund::Config {
 	/// The staking balance.
 	type Currency: LockableCurrency<Self::AccountId, Moment=Self::BlockNumber>;
 
@@ -872,6 +873,9 @@ pub trait Config: frame_system::Config + SendTransactionTypes<Call<Self>> {
 
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
+
+	/// Pot
+	type Pot: Pot;
 }
 
 /// Mode of era-forcing.
@@ -1102,7 +1106,7 @@ decl_storage! {
 		build(|config: &GenesisConfig<T>| {
 			for &(ref stash, ref controller, balance, ref status) in &config.stakers {
 				assert!(
-					T::Currency::free_balance(&stash) >= balance,
+					<T as Config>::Currency::free_balance(&stash) >= balance,
 					"Stash does not have enough balance to bond."
 				);
 				let _ = <Module<T>>::bond(
@@ -1428,7 +1432,7 @@ decl_module! {
 		/// Take the origin account as a stash and lock up `value` of its balance. `controller` will
 		/// be the account that controls it.
 		///
-		/// `value` must be more than the `minimum_balance` specified by `T::Currency`.
+		/// `value` must be more than the `minimum_balance` specified by `<T as Config>::Currency`.
 		///
 		/// The dispatch origin for this call must be _Signed_ by the stash account.
 		///
@@ -1466,7 +1470,7 @@ decl_module! {
 			}
 
 			// reject a bond which is considered to be _dust_.
-			if value < T::Currency::minimum_balance() {
+			if value < <T as Config>::Currency::minimum_balance() {
 				Err(Error::<T>::InsufficientValue)?
 			}
 
@@ -1481,7 +1485,7 @@ decl_module! {
 			let history_depth = Self::history_depth();
 			let last_reward_era = current_era.saturating_sub(history_depth);
 
-			let stash_balance = T::Currency::free_balance(&stash);
+			let stash_balance = <T as Config>::Currency::free_balance(&stash);
 			let value = value.min(stash_balance);
 			Self::deposit_event(RawEvent::Bonded(stash.clone(), value));
 			let item = StakingLedger {
@@ -1523,13 +1527,13 @@ decl_module! {
 			let controller = Self::bonded(&stash).ok_or(Error::<T>::NotStash)?;
 			let mut ledger = Self::ledger(&controller).ok_or(Error::<T>::NotController)?;
 
-			let stash_balance = T::Currency::free_balance(&stash);
+			let stash_balance = <T as Config>::Currency::free_balance(&stash);
 			if let Some(extra) = stash_balance.checked_sub(&ledger.total) {
 				let extra = extra.min(max_additional);
 				ledger.total += extra;
 				ledger.active += extra;
 				// last check: the new active amount of ledger must be more than ED.
-				ensure!(ledger.active >= T::Currency::minimum_balance(), Error::<T>::InsufficientValue);
+				ensure!(ledger.active >= <T as Config>::Currency::minimum_balance(), Error::<T>::InsufficientValue);
 
 				Self::deposit_event(RawEvent::Bonded(stash, extra));
 				Self::update_ledger(&controller, &ledger);
@@ -1538,7 +1542,7 @@ decl_module! {
 
 		/// Schedule a portion of the stash to be unlocked ready for transfer out after the bond
 		/// period ends. If this leaves an amount actively bonded less than
-		/// T::Currency::minimum_balance(), then it is increased to the full amount.
+		/// <T as Config>::Currency::minimum_balance(), then it is increased to the full amount.
 		///
 		/// Once the unlock period is done, you can call `withdraw_unbonded` to actually move
 		/// the funds out of management ready for transfer.
@@ -1584,7 +1588,7 @@ decl_module! {
 				ledger.active -= value;
 
 				// Avoid there being a dust balance left in the staking system.
-				if ledger.active < T::Currency::minimum_balance() {
+				if ledger.active < <T as Config>::Currency::minimum_balance() {
 					value += ledger.active;
 					ledger.active = Zero::zero();
 				}
@@ -1638,13 +1642,13 @@ decl_module! {
 				ledger = ledger.consolidate_unlocked(current_era)
 			}
 
-			let post_info_weight = if ledger.unlocking.is_empty() && ledger.active <= T::Currency::minimum_balance() {
+			let post_info_weight = if ledger.unlocking.is_empty() && ledger.active <= <T as Config>::Currency::minimum_balance() {
 				// This account must have called `unbond()` with some value that caused the active
 				// portion to fall below existential deposit + will have no more unlocking chunks
 				// left. We can now safely remove all staking-related information.
 				Self::kill_stash(&stash, num_slashing_spans)?;
 				// remove the lock.
-				T::Currency::remove_lock(STAKING_ID, &stash);
+				<T as Config>::Currency::remove_lock(STAKING_ID, &stash);
 				// This is worst case scenario, so we use the full weight and return None
 				None
 			} else {
@@ -1927,7 +1931,7 @@ decl_module! {
 			Self::kill_stash(&stash, num_slashing_spans)?;
 
 			// remove the lock.
-			T::Currency::remove_lock(STAKING_ID, &stash);
+			<T as Config>::Currency::remove_lock(STAKING_ID, &stash);
 		}
 
 		/// Force there to be a new era at the end of sessions indefinitely.
@@ -2034,7 +2038,7 @@ decl_module! {
 
 			let ledger = ledger.rebond(value);
 			// last check: the new active amount of ledger must be more than ED.
-			ensure!(ledger.active >= T::Currency::minimum_balance(), Error::<T>::InsufficientValue);
+			ensure!(ledger.active >= <T as Config>::Currency::minimum_balance(), Error::<T>::InsufficientValue);
 
 			Self::update_ledger(&controller, &ledger);
 			Ok(Some(
@@ -2100,10 +2104,10 @@ decl_module! {
 		/// # </weight>
 		#[weight = T::WeightInfo::reap_stash(*num_slashing_spans)]
 		fn reap_stash(_origin, stash: T::AccountId, num_slashing_spans: u32) {
-			let at_minimum = T::Currency::total_balance(&stash) == T::Currency::minimum_balance();
+			let at_minimum = <T as Config>::Currency::total_balance(&stash) == <T as Config>::Currency::minimum_balance();
 			ensure!(at_minimum, Error::<T>::FundedTarget);
 			Self::kill_stash(&stash, num_slashing_spans)?;
-			T::Currency::remove_lock(STAKING_ID, &stash);
+			<T as Config>::Currency::remove_lock(STAKING_ID, &stash);
 		}
 
 		/// Submit an election result to the chain. If the solution:
@@ -2256,6 +2260,13 @@ decl_module! {
 
 			Ok(())
 		}
+
+		#[weight = 0]
+		pub fn reward_validator(origin) -> DispatchResult {
+			let pot_value = <pallet_fund::Module<T> as Pot>::pot_value();
+
+			Ok(())
+		}
 	}
 }
 
@@ -2278,7 +2289,7 @@ impl<T: Config> Module<T> {
 	pub fn slashable_balance_of_fn() -> Box<dyn Fn(&T::AccountId) -> VoteWeight> {
 		// NOTE: changing this to unboxed `impl Fn(..)` return type and the module will still
 		// compile, while some types in mock fail to resolve.
-		let issuance = T::Currency::total_issuance();
+		let issuance = <T as Config>::Currency::total_issuance();
 		Box::new(move |who: &T::AccountId| -> VoteWeight {
 			Self::slashable_balance_of_vote_weight(who, issuance)
 		})
@@ -2432,7 +2443,7 @@ impl<T: Config> Module<T> {
 		controller: &T::AccountId,
 		ledger: &StakingLedger<T::AccountId, BalanceOf<T>>
 	) {
-		T::Currency::set_lock(
+		<T as Config>::Currency::set_lock(
 			STAKING_ID,
 			&ledger.stash,
 			ledger.total,
@@ -2454,21 +2465,21 @@ impl<T: Config> Module<T> {
 		match dest {
 			RewardDestination::Controller => Self::bonded(stash)
 				.and_then(|controller|
-					Some(T::Currency::deposit_creating(&controller, amount))
+					Some(<T as Config>::Currency::deposit_creating(&controller, amount))
 				),
 			RewardDestination::Stash =>
-				T::Currency::deposit_into_existing(stash, amount).ok(),
+				<T as Config>::Currency::deposit_into_existing(stash, amount).ok(),
 			RewardDestination::Staked => Self::bonded(stash)
 				.and_then(|c| Self::ledger(&c).map(|l| (c, l)))
 				.and_then(|(controller, mut l)| {
 					l.active += amount;
 					l.total += amount;
-					let r = T::Currency::deposit_into_existing(stash, amount).ok();
+					let r = <T as Config>::Currency::deposit_into_existing(stash, amount).ok();
 					Self::update_ledger(&controller, &l);
 					r
 				}),
 			RewardDestination::Account(dest_account) => {
-				Some(T::Currency::deposit_creating(&dest_account, amount))
+				Some(<T as Config>::Currency::deposit_creating(&dest_account, amount))
 			}
 		}
 	}
@@ -2804,7 +2815,7 @@ impl<T: Config> Module<T> {
 			// let (validator_payout, max_payout) = inflation::compute_total_payout(
 			// 	&T::RewardCurve::get(),
 			// 	Self::eras_total_stake(&active_era.index),
-			// 	T::Currency::total_issuance(),
+			// 	<T as Config>::Currency::total_issuance(),
 			// 	// Duration of era; more than u64::MAX is rewarded as u64::MAX.
 			// 	era_duration.saturated_into::<u64>(),
 			// );
@@ -2817,7 +2828,7 @@ impl<T: Config> Module<T> {
 			// Set ending era reward.
 			// <ErasValidatorReward<T>>::insert(&active_era.index, validator_payout);
 			<ErasValidatorReward<T>>::insert(&active_era.index, zero_balance);
-			T::RewardRemainder::on_unbalanced(T::Currency::issue(zero_balance));
+			T::RewardRemainder::on_unbalanced(<T as Config>::Currency::issue(zero_balance));
 		}
 	}
 
@@ -3048,7 +3059,7 @@ impl<T: Config> Module<T> {
 	fn collect_exposure(
 		supports: SupportMap<T::AccountId>,
 	) -> Vec<(T::AccountId, Exposure<T::AccountId, BalanceOf<T>>)> {
-		let total_issuance = T::Currency::total_issuance();
+		let total_issuance = <T as Config>::Currency::total_issuance();
 		let to_currency = |e: ExtendedBalance| T::CurrencyToVote::to_currency(e, total_issuance);
 
 		supports.into_iter().map(|(validator, support)| {

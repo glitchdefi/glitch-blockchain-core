@@ -104,7 +104,7 @@ pub fn create_validator_with_nominators<T: Config>(
 	ErasRewardPoints::<T>::insert(current_era, reward);
 
 	// Create reward pool
-	let total_payout = T::Currency::minimum_balance()
+	let total_payout = <T as Config>::Currency::minimum_balance()
 		.saturating_mul(upper_bound.into())
 		.saturating_mul(1000u32.into());
 	<ErasValidatorReward<T>>::insert(current_era, total_payout);
@@ -120,7 +120,7 @@ benchmarks! {
 		let controller = create_funded_user::<T>("controller", USER_SEED, 100);
 		let controller_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(controller.clone());
 		let reward_destination = RewardDestination::Staked;
-		let amount = T::Currency::minimum_balance() * 10u32.into();
+		let amount = <T as Config>::Currency::minimum_balance() * 10u32.into();
 		whitelist_account!(stash);
 	}: _(RawOrigin::Signed(stash.clone()), controller_lookup, amount, reward_destination)
 	verify {
@@ -130,7 +130,7 @@ benchmarks! {
 
 	bond_extra {
 		let (stash, controller) = create_stash_controller::<T>(USER_SEED, 100, Default::default())?;
-		let max_additional = T::Currency::minimum_balance() * 10u32.into();
+		let max_additional = <T as Config>::Currency::minimum_balance() * 10u32.into();
 		let ledger = Ledger::<T>::get(&controller).ok_or("ledger not created before")?;
 		let original_bonded: BalanceOf<T> = ledger.active;
 		whitelist_account!(stash);
@@ -143,7 +143,7 @@ benchmarks! {
 
 	unbond {
 		let (_, controller) = create_stash_controller::<T>(USER_SEED, 100, Default::default())?;
-		let amount = T::Currency::minimum_balance() * 10u32.into();
+		let amount = <T as Config>::Currency::minimum_balance() * 10u32.into();
 		let ledger = Ledger::<T>::get(&controller).ok_or("ledger not created before")?;
 		let original_bonded: BalanceOf<T> = ledger.active;
 		whitelist_account!(controller);
@@ -160,7 +160,7 @@ benchmarks! {
 		let s in 0 .. MAX_SPANS;
 		let (stash, controller) = create_stash_controller::<T>(0, 100, Default::default())?;
 		add_slashing_spans::<T>(&stash, s);
-		let amount = T::Currency::minimum_balance() * 5u32.into(); // Half of total
+		let amount = <T as Config>::Currency::minimum_balance() * 5u32.into(); // Half of total
 		Staking::<T>::unbond(RawOrigin::Signed(controller.clone()).into(), amount)?;
 		CurrentEra::put(EraIndex::max_value());
 		let ledger = Ledger::<T>::get(&controller).ok_or("ledger not created before")?;
@@ -179,7 +179,7 @@ benchmarks! {
 		let s in 0 .. MAX_SPANS;
 		let (stash, controller) = create_stash_controller::<T>(0, 100, Default::default())?;
 		add_slashing_spans::<T>(&stash, s);
-		let amount = T::Currency::minimum_balance() * 10u32.into();
+		let amount = <T as Config>::Currency::minimum_balance() * 10u32.into();
 		Staking::<T>::unbond(RawOrigin::Signed(controller.clone()).into(), amount)?;
 		CurrentEra::put(EraIndex::max_value());
 		let ledger = Ledger::<T>::get(&controller).ok_or("ledger not created before")?;
@@ -357,20 +357,20 @@ benchmarks! {
 
 		let caller = whitelisted_caller();
 		let validator_controller = <Bonded<T>>::get(&validator).unwrap();
-		let balance_before = T::Currency::free_balance(&validator_controller);
+		let balance_before = <T as Config>::Currency::free_balance(&validator_controller);
 		for (_, controller) in &nominators {
-			let balance = T::Currency::free_balance(&controller);
+			let balance = <T as Config>::Currency::free_balance(&controller);
 			ensure!(balance.is_zero(), "Controller has balance, but should be dead.");
 		}
 	}: payout_stakers(RawOrigin::Signed(caller), validator.clone(), current_era)
 	verify {
-		let balance_after = T::Currency::free_balance(&validator_controller);
+		let balance_after = <T as Config>::Currency::free_balance(&validator_controller);
 		ensure!(
 			balance_before < balance_after,
 			"Balance of validator controller should have increased after payout.",
 		);
 		for (_, controller) in &nominators {
-			let balance = T::Currency::free_balance(&controller);
+			let balance = <T as Config>::Currency::free_balance(&controller);
 			ensure!(!balance.is_zero(), "Payout not given to controller.");
 		}
 	}
@@ -389,21 +389,21 @@ benchmarks! {
 		<ErasValidatorPrefs<T>>::insert(current_era, validator.clone(), <Staking<T>>::validators(&validator));
 
 		let caller = whitelisted_caller();
-		let balance_before = T::Currency::free_balance(&validator);
+		let balance_before = <T as Config>::Currency::free_balance(&validator);
 		let mut nominator_balances_before = Vec::new();
 		for (stash, _) in &nominators {
-			let balance = T::Currency::free_balance(&stash);
+			let balance = <T as Config>::Currency::free_balance(&stash);
 			nominator_balances_before.push(balance);
 		}
 	}: payout_stakers(RawOrigin::Signed(caller), validator.clone(), current_era)
 	verify {
-		let balance_after = T::Currency::free_balance(&validator);
+		let balance_after = <T as Config>::Currency::free_balance(&validator);
 		ensure!(
 			balance_before < balance_after,
 			"Balance of validator stash should have increased after payout.",
 		);
 		for ((stash, _), balance_before) in nominators.iter().zip(nominator_balances_before.iter()) {
-			let balance_after = T::Currency::free_balance(&stash);
+			let balance_after = <T as Config>::Currency::free_balance(&stash);
 			ensure!(
 				balance_before < &balance_after,
 				"Balance of nominator stash should have increased after payout.",
@@ -454,7 +454,7 @@ benchmarks! {
 		let s in 1 .. MAX_SPANS;
 		let (stash, controller) = create_stash_controller::<T>(0, 100, Default::default())?;
 		add_slashing_spans::<T>(&stash, s);
-		T::Currency::make_free_balance_be(&stash, T::Currency::minimum_balance());
+		<T as Config>::Currency::make_free_balance_be(&stash, <T as Config>::Currency::minimum_balance());
 		whitelist_account!(controller);
 	}: _(RawOrigin::Signed(controller), stash.clone(), s)
 	verify {
@@ -501,7 +501,7 @@ benchmarks! {
 		ErasRewardPoints::<T>::insert(current_era, reward);
 
 		// Create reward pool
-		let total_payout = T::Currency::minimum_balance() * 1000u32.into();
+		let total_payout = <T as Config>::Currency::minimum_balance() * 1000u32.into();
 		<ErasValidatorReward<T>>::insert(current_era, total_payout);
 
 		let caller: T::AccountId = whitelisted_caller();
@@ -524,8 +524,8 @@ benchmarks! {
 			staking_ledger.unlocking.push(unlock_chunk.clone())
 		}
 		Ledger::<T>::insert(controller, staking_ledger);
-		let slash_amount = T::Currency::minimum_balance() * 10u32.into();
-		let balance_before = T::Currency::free_balance(&stash);
+		let slash_amount = <T as Config>::Currency::minimum_balance() * 10u32.into();
+		let balance_before = <T as Config>::Currency::free_balance(&stash);
 	}: {
 		crate::slashing::do_slash::<T>(
 			&stash,
@@ -534,7 +534,7 @@ benchmarks! {
 			&mut NegativeImbalanceOf::<T>::zero()
 		);
 	} verify {
-		let balance_after = T::Currency::free_balance(&stash);
+		let balance_after = <T as Config>::Currency::free_balance(&stash);
 		assert!(balance_before > balance_after);
 	}
 

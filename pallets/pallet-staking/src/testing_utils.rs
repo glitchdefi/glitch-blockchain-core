@@ -41,10 +41,10 @@ pub fn create_funded_user<T: Config>(
 	balance_factor: u32,
 ) -> T::AccountId {
 	let user = account(string, n, SEED);
-	let balance = T::Currency::minimum_balance() * balance_factor.into();
-	T::Currency::make_free_balance_be(&user, balance);
+	let balance = <T as Config>::Currency::minimum_balance() * balance_factor.into();
+	<T as Config>::Currency::make_free_balance_be(&user, balance);
 	// ensure T::CurrencyToVote will work correctly.
-	T::Currency::issue(balance);
+	<T as Config>::Currency::issue(balance);
 	user
 }
 
@@ -59,7 +59,7 @@ pub fn create_stash_controller<T: Config>(
 	let stash = create_funded_user::<T>("stash", n, balance_factor);
 	let controller = create_funded_user::<T>("controller", n, balance_factor);
 	let controller_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(controller.clone());
-	let amount = T::Currency::minimum_balance() * (balance_factor / 10).max(1).into();
+	let amount = <T as Config>::Currency::minimum_balance() * (balance_factor / 10).max(1).into();
 	Staking::<T>::bond(RawOrigin::Signed(stash.clone()).into(), controller_lookup, amount, destination)?;
 	return Ok((stash, controller))
 }
@@ -77,7 +77,7 @@ pub fn create_stash_and_dead_controller<T: Config>(
 	// controller has no funds
 	let controller = create_funded_user::<T>("controller", n, 0);
 	let controller_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(controller.clone());
-	let amount = T::Currency::minimum_balance() * (balance_factor / 10).max(1).into();
+	let amount = <T as Config>::Currency::minimum_balance() * (balance_factor / 10).max(1).into();
 	Staking::<T>::bond(RawOrigin::Signed(stash.clone()).into(), controller_lookup, amount, destination)?;
 	return Ok((stash, controller))
 }
@@ -208,7 +208,7 @@ pub fn get_weak_solution<T: Config>(
 				w.clone(),
 				<Module<T>>::slashable_balance_of_vote_weight(
 					&w,
-					T::Currency::total_issuance(),
+					<T as Config>::Currency::total_issuance(),
 				).into(),
 			)],
 		})
@@ -332,7 +332,7 @@ pub fn get_single_winner_solution<T: Config>(
 
 	let stake = <Staking<T>>::slashable_balance_of(&winner);
 	let stake =
-		<T::CurrencyToVote>::to_vote(stake, T::Currency::total_issuance()) as ExtendedBalance;
+		<T::CurrencyToVote>::to_vote(stake, <T as Config>::Currency::total_issuance()) as ExtendedBalance;
 
 	let val_index = val_index as ValidatorIndex;
 	let nom_index = nom_index as NominatorIndex;

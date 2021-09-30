@@ -26,6 +26,7 @@ frame-system = { version = "3.0.0", default-features = false, git = "https://git
 pallet-session = { version = "3.0.0", default-features = false, features = ["historical"], git = "https://github.com/paritytech/substrate.git",  tag = "v3.0.0" }
 pallet-authorship = { version = "3.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git",  tag = "v3.0.0" }
 sp-application-crypto = { version = "3.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git",  tag = "v3.0.0" }
+pallet-fund = { path = '../pallet-fund', default-features = false }
 
 # Optional imports for benchmarking
 frame-benchmarking = { version = "3.0.0", default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git",  tag = "v3.0.0" }

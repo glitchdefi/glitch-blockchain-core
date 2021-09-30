@@ -951,6 +951,8 @@ impl pallet_staking::Config for Runtime {
     type UnsignedPriority = StakingUnsignedPriority;
     type WeightInfo = pallet_staking::weights::SubstrateWeight<Runtime>;
     type OffchainSolutionWeightLimit = OffchainSolutionWeightLimit;
+
+    type Pot = Fund;
 }
 
 parameter_types! {

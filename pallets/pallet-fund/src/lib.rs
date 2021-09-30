@@ -3,26 +3,22 @@
 use sp_runtime::{traits::AccountIdConversion, ModuleId};
 use sp_std::prelude::*;
 
-
-
 use frame_support::{
 	decl_event, decl_module, decl_storage,
 	dispatch::{DispatchError, DispatchResult},
 	traits::{Currency, ExistenceRequirement::AllowDeath, Imbalance, OnUnbalanced},
 };
-use frame_system::{ensure_root, ensure_signed};
-use frame_support::pallet_prelude::Get;
+use frame_system::{ensure_signed};
+// use frame_support::pallet_prelude::Get;
 use pallet_balances::*;
-use pallet_staking::*;
-use pallet_staking::{self as staking};
-use pallet_staking::StakerStatus::Validator;
-use pallet_session as session;
+// use pallet_session as session;
 
 pub type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 pub type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<
 	<T as frame_system::Config>::AccountId,
 >>::NegativeImbalance;
+pub type Balance = u64;
 
 /// Hardcoded pallet ID; used to create the special Pot Account
 /// Must be exactly 8 characters long
@@ -33,7 +29,6 @@ pub trait Config: frame_system::Config {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 	/// The currency type that the charity deals in
 	type Currency: Currency<Self::AccountId>;
-
 }
 
 decl_storage! {
@@ -102,7 +97,7 @@ impl<T: Config> Module<T> {
 	}
 
 	/// The Charity's balance
-	fn pot() -> BalanceOf<T> {
+	pub fn pot() -> BalanceOf<T> {
 		T::Currency::free_balance(&Self::account_id())
 	}
 }
@@ -118,5 +113,15 @@ impl<T: Config> OnUnbalanced<NegativeImbalanceOf<T>> for Module<T> {
 		let _ = T::Currency::resolve_creating(&Self::account_id(), amount);
 
 		Self::deposit_event(RawEvent::ImbalanceAbsorbed(numeric_amount, Self::pot()));
+	}
+}
+
+pub trait Pot {
+	fn pot_value() -> Option<Balance>;
+}
+
+impl<T: Config> Pot for Module<T> {
+	fn pot_value() -> Option<Balance> {
+		sp_std::convert::TryInto::<u64>::try_into(Module::<T>::pot()).ok()
 	}
 }
