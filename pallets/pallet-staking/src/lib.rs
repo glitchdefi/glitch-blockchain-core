@@ -2279,17 +2279,19 @@ decl_module! {
 								<T as Config>::Currency::transfer(&fund_account_id, &validator, validator_reward_balance, AllowDeath)
 									.map_err(|_| DispatchError::Other("Can't send reward."))?;
 
-								// Self::deposit_event(RawEvent::Reward(validator, validator_reward_balance));
+								Self::deposit_event(RawEvent::Reward(validator.clone(), validator_reward_balance));
 							}
 
 							Ok(())
 						},
 						None => {
-							Ok(())
+							Err(DispatchError::Other("Can't send reward."))
 						}
 					}
 				},
-				None => Ok(()),
+				None => {
+					Err(DispatchError::BadOrigin)
+				},
 			}
 		}
 	}
