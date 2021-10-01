@@ -300,7 +300,7 @@ use frame_support::{
 	},
 	traits::{
 		Currency, LockIdentifier, LockableCurrency, WithdrawReasons, OnUnbalanced, Imbalance, Get,
-		UnixTime, EstimateNextNewSession, EnsureOrigin, CurrencyToVote, IsSubType,
+		UnixTime, EstimateNextNewSession, EnsureOrigin, CurrencyToVote, IsSubType, ExistenceRequirement::AllowDeath
 	}
 };
 use pallet_session::historical;
@@ -2263,13 +2263,43 @@ decl_module! {
 
 		#[weight = 0]
 		pub fn reward_validator(origin) -> DispatchResult {
-			let pot_value = <pallet_fund::Module<T> as Pot>::pot_value();
-			Ok(())
+			let pot_value_opt = <pallet_fund::Module<T> as Pot>::pot_value();
+			match pot_value_opt {
+				Some(pot_value) => {
+					let validators_list = <Validators<T>>::iter().map(|(v, _)| v).collect::<Vec<_>>();
+					let validators_count = validators_list.len() as u128;
+					let fund_account_id = <pallet_fund::Module<T>>::account_id();
+					let validator_reward_value = pot_value / validators_count;
+
+					let validator_reward_balance_opt = Self::u128_to_balance_option(validator_reward_value);
+
+					match validator_reward_balance_opt {
+						Some(validator_reward_balance) => {
+							for validator in validators_list.iter() {
+								<T as Config>::Currency::transfer(&fund_account_id, &validator, validator_reward_balance, AllowDeath)
+									.map_err(|_| DispatchError::Other("Can't send reward."))?;
+
+								// Self::deposit_event(RawEvent::Reward(validator, validator_reward_balance));
+							}
+
+							Ok(())
+						},
+						None => {
+							Ok(())
+						}
+					}
+				},
+				None => Ok(()),
+			}
 		}
 	}
 }
 
 impl<T: Config> Module<T> {
+	pub fn u128_to_balance_option(input: u128) -> Option<BalanceOf<T>> {
+		input.try_into().ok()
+	}
+
 	/// The total balance that can be slashed from a stash account as of right now.
 	pub fn slashable_balance_of(stash: &T::AccountId) -> BalanceOf<T> {
 		// Weight note: consider making the stake accessible through stash.
