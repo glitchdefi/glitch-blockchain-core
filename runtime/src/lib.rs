@@ -659,7 +659,7 @@ pub const DAYS: BlockNumber = HOURS * 24;
 
 parameter_types! {
     pub const CouncilMotionDuration: BlockNumber = 5 * DAYS;
-    pub const CouncilMaxProposals: u32 = 100;
+    pub const CouncilMaxProposals: u32 = 5;
     pub const CouncilMaxMembers: u32 = 100;
 }
 
@@ -678,8 +678,8 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 
 parameter_types! {
     pub const TechnicalMotionDuration: BlockNumber = 5 * DAYS;
-    pub const TechnicalMaxProposals: u32 = 100;
-    pub const TechnicalMaxMembers: u32 = 100;
+    pub const TechnicalMaxProposals: u32 = 5;
+    pub const TechnicalMaxMembers: u32 = 10;
 }
 
 type TechnicalCollective = pallet_collective::Instance2;
@@ -816,11 +816,11 @@ impl evm_accounts::Config for Runtime {
 
 parameter_types! {
   // session: 10 minutes
-  pub const SessionsPerEra: sp_staking::SessionIndex = 6;  // 6 sessions in an era, (6 hours)
-  pub const BondingDuration: pallet_staking::EraIndex = 24; // 24 era for unbouding (24 * 6 hours)
-  pub const SlashDeferDuration: pallet_staking::EraIndex = 12; // 1/2 bonding duration
+  pub const SessionsPerEra: sp_staking::SessionIndex = 6;  // 6 sessions in an era (1 hour).
+  pub const BondingDuration: pallet_staking::EraIndex = 4; // 4 eras for unbonding (4 hours).
+  pub const SlashDeferDuration: pallet_staking::EraIndex = 3; // 1/2 bonding duration
   pub const ElectionLookahead: BlockNumber = EPOCH_DURATION_IN_BLOCKS / 4;
-  pub const MaxNominatorRewardedPerValidator: u32 = 64;
+  pub const MaxNominatorRewardedPerValidator: u32 = 5;
   pub const StakingUnsignedPriority: TransactionPriority = TransactionPriority::max_value() / 2;
   pub const RewardCurve: &'static PiecewiseLinear<'static> = &REWARD_CURVE;
   pub const MaxIterations: u32 = 10;
@@ -880,7 +880,7 @@ parameter_types! {
   /// Daily council elections.
   pub const TermDuration: BlockNumber = 3 * DAYS;
   pub const DesiredMembers: u32 = 7;
-  pub const DesiredRunnersUp: u32 = 30;
+  pub const DesiredRunnersUp: u32 = 5;
   pub const ElectionsPhragmenModuleId: LockIdentifier = *b"phrelect";
 }
 
@@ -977,8 +977,8 @@ parameter_types! {
   pub const VotingPeriod: BlockNumber = 7 * DAYS;
   pub const FastTrackVotingPeriod: BlockNumber = 1 * DAYS;
   pub const MinimumDeposit: Balance = 100 * DOLLARS;
-  pub const EnactmentPeriod: BlockNumber = 8 * DAYS;
-  pub const CooloffPeriod: BlockNumber = 7 * DAYS;
+  pub const EnactmentPeriod: BlockNumber = 20 * MINUTES;
+  pub const CooloffPeriod: BlockNumber = 20 * MINUTES;
   // One cent: $10,000 / MB
   pub const PreimageByteDeposit: Balance = 10 * MILLICENTS;
   pub const InstantAllowed: bool = false;
