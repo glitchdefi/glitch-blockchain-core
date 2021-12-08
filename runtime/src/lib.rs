@@ -674,7 +674,7 @@ pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
 
 parameter_types! {
-    pub const CouncilMotionDuration: BlockNumber = 5 * DAYS;
+    pub const CouncilMotionDuration: BlockNumber = 10 * MINUTES;
     pub const CouncilMaxProposals: u32 = 5;
     pub const CouncilMaxMembers: u32 = 100;
 }
@@ -693,7 +693,7 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 }
 
 parameter_types! {
-    pub const TechnicalMotionDuration: BlockNumber = 5 * DAYS;
+    pub const TechnicalMotionDuration: BlockNumber = 10 * MINUTES;
     pub const TechnicalMaxProposals: u32 = 5;
     pub const TechnicalMaxMembers: u32 = 10;
 }
@@ -725,16 +725,16 @@ impl pallet_membership::Config<pallet_membership::Instance1> for Runtime {
 parameter_types! {
     pub const ProposalBond: Permill = Permill::from_percent(5);
     pub const ProposalBondMinimum: Balance = 1 * DOLLARS;
-    pub const SpendPeriod: BlockNumber = 1 * DAYS;
+    pub const SpendPeriod: BlockNumber = 10 * MINUTES;
     pub const Burn: Permill = Permill::from_percent(1);
-    pub const TipCountdown: BlockNumber = 1 * DAYS;
+    pub const TipCountdown: BlockNumber = 10 * MINUTES;
     pub const TipFindersFee: Percent = Percent::from_percent(20);
     pub const TipReportDepositBase: Balance = 1 * DOLLARS;
     pub const DataDepositPerByte: Balance = 1 * CENTS;
     pub const BountyDepositBase: Balance = 1 * DOLLARS;
     pub const BountyDepositPayoutDelay: BlockNumber = 1 * DAYS;
     pub const TreasuryModuleId: ModuleId = ModuleId(*b"py/trsry");
-    pub const BountyUpdatePeriod: BlockNumber = 14 * DAYS;
+    pub const BountyUpdatePeriod: BlockNumber = 10 * MINUTES;
     pub const MaximumReasonLength: u32 = 16384;
     pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
     pub const BountyValueMinimum: Balance = 5 * DOLLARS;
@@ -894,7 +894,7 @@ parameter_types! {
   // additional data per vote is 32 bytes (account id).
   pub const VotingBondFactor: Balance = deposit(0, 32);
   /// Daily council elections.
-  pub const TermDuration: BlockNumber = 3 * DAYS;
+  pub const TermDuration: BlockNumber = 10 * MINUTES;
   pub const DesiredMembers: u32 = 7;
   pub const DesiredRunnersUp: u32 = 5;
   pub const ElectionsPhragmenModuleId: LockIdentifier = *b"phrelect";
@@ -989,8 +989,8 @@ impl pallet_staking::Config for Runtime {
 }
 
 parameter_types! {
-  pub const LaunchPeriod: BlockNumber = 7 * DAYS;
-  pub const VotingPeriod: BlockNumber = 7 * DAYS;
+  pub const LaunchPeriod: BlockNumber = 10 * MINUTES;
+  pub const VotingPeriod: BlockNumber = 5 * MINUTES;
   pub const FastTrackVotingPeriod: BlockNumber = 1 * DAYS;
   pub const MinimumDeposit: Balance = 100 * DOLLARS;
   pub const EnactmentPeriod: BlockNumber = 20 * MINUTES;
