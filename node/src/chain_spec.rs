@@ -295,24 +295,24 @@ pub fn glitch_testnet_config() -> Result<ChainSpec, String> {
       // Bootnodes
       // node-key=0decb1a3d303a8849a06e9c258698929ee1dfdc524fddc7be1771becd7236e29
       vec![
-        //   "/dns/sub-uatnet-01.glitch.finance/tcp/30333/p2p/12D3KooWFKSEVZGNrS6THQ6J2vSgLDePdXXz9HYE6TtgopZV22T1"
-        // .parse()
-        // .unwrap(),
-        //   "/dns/sub-uatnet-02.glitch.finance/tcp/30333/p2p/12D3KooWPRSGH3LnwG5Uhj9Nm7qY7hkdrhd4vg4znb49ix9ADZwD"
-        // .parse()
-        // .unwrap(),
-        //   "/dns/sub-uatnet-03.glitch.finance/tcp/30333/p2p/12D3KooWBEyY6ySQqjniaqVHH1JtiMVU5KmSPvoPgqkpp6XhBjEt"
-        // .parse()
-        // .unwrap(),
-        //   "/dns/sub-uatnet-04.glitch.finance/tcp/30333/p2p/12D3KooWKwDVXckeQ86PrNFCyrbaA4sEkg9hPY9a5fe2yZ3gSRX1"
-        // .parse()
-        // .unwrap(),
-        //   "/dns/sub-uatnet-05.glitch.finance/tcp/30333/p2p/12D3KooWRYMq2fD7cRikXXc9doocmBNw37tfQTKSnPfEfqeaMyG3"
-        // .parse()
-        // .unwrap(),
-        //   "/dns/sub-uatnet-06.glitch.finance/tcp/30333/p2p/12D3KooWJoLZFCEAyibfjcyTCPrmw385nW2CdiVvqnJX5pE4VSDz"
-        // .parse()
-        // .unwrap(),
+          "/dns/sub-uatnet-01.glitch.finance/tcp/30333/p2p/12D3KooWFKSEVZGNrS6THQ6J2vSgLDePdXXz9HYE6TtgopZV22T1"
+        .parse()
+        .unwrap(),
+          "/dns/sub-uatnet-02.glitch.finance/tcp/30333/p2p/12D3KooWPRSGH3LnwG5Uhj9Nm7qY7hkdrhd4vg4znb49ix9ADZwD"
+        .parse()
+        .unwrap(),
+          "/dns/sub-uatnet-03.glitch.finance/tcp/30333/p2p/12D3KooWBEyY6ySQqjniaqVHH1JtiMVU5KmSPvoPgqkpp6XhBjEt"
+        .parse()
+        .unwrap(),
+          "/dns/sub-uatnet-04.glitch.finance/tcp/30333/p2p/12D3KooWKwDVXckeQ86PrNFCyrbaA4sEkg9hPY9a5fe2yZ3gSRX1"
+        .parse()
+        .unwrap(),
+          "/dns/sub-uatnet-05.glitch.finance/tcp/30333/p2p/12D3KooWRYMq2fD7cRikXXc9doocmBNw37tfQTKSnPfEfqeaMyG3"
+        .parse()
+        .unwrap(),
+          "/dns/sub-uatnet-06.glitch.finance/tcp/30333/p2p/12D3KooWJoLZFCEAyibfjcyTCPrmw385nW2CdiVvqnJX5pE4VSDz"
+        .parse()
+        .unwrap(),
       ],
       //Telemetry
       None,
